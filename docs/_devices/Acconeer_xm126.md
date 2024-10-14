@@ -6,6 +6,7 @@ image: Acconeer_XM126.jpg
 physical_description:
 broadcasted_properties:
   - motion
+  - distance mm
   - temperature
   - battery
   - rssi
