@@ -45,7 +45,7 @@ def parse_acconeer(self, data: bytes, mac: str):
                 distance_mm,
                 reserved1,
                 reserved2
-            ) = unpack("<HhHHjI", xvalue)
+            ) = unpack("<HhHHhI", xvalue)
             result.update({
                 "motion": 0 if presence == 0 else 1,
                 "temperature": temperature,
