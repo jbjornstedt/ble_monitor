@@ -37,18 +37,32 @@ def parse_acconeer(self, data: bytes, mac: str):
                 "temperature": temperature,
                 "battery": battery_level,
             })
-        else:
+        elif device_id == 0x91:
             (
                 battery_level,
                 temperature,
                 presence,
-                distance_mm
-            ) = unpack("<HhHH", xvalue)
+                distance_mm,
+                reserved1,
+                reserved2
+            ) = unpack("<HhHHjI", xvalue)
             result.update({
                 "motion": 0 if presence == 0 else 1,
                 "temperature": temperature,
                 "battery": battery_level,
                 "distance mm": distance_mm,
+            })
+        else:
+            (
+                battery_level,
+                temperature,
+                presence,
+                reserved2
+            ) = unpack("<HhHQ", xvalue)
+            result.update({
+                "motion": 0 if presence == 0 else 1,
+                "temperature": temperature,
+                "battery": battery_level,
             })
     else:
         device_type = None
