@@ -10,6 +10,7 @@ ACCONEER_SENSOR_IDS = {
     0x80: "Acconeer XM122",
     0x90: "Acconeer XM126",
     0x91: "Acconeer XM126",
+    0x95: "Acconeer XM126",
 }
 
 
@@ -26,17 +27,16 @@ def parse_acconeer(self, data: bytes, mac: str):
         device_type = ACCONEER_SENSOR_IDS[device_id]
 
         if device_id == 0x90:
-            (
-                battery_level,
-                temperature,
-                distance_mm,
-                reserved2
-            ) = unpack("<HhHQ", xvalue)
-            result.update({
-                "distance mm": distance_mm,
-                "temperature": temperature,
-                "battery": battery_level,
-            })
+            (battery_level, temperature, distance_mm, reserved2) = unpack(
+                "<HhHQ", xvalue
+            )
+            result.update(
+                {
+                    "distance mm": distance_mm,
+                    "temperature": temperature,
+                    "battery": battery_level,
+                }
+            )
         elif device_id == 0x91:
             (
                 battery_level,
@@ -44,26 +44,46 @@ def parse_acconeer(self, data: bytes, mac: str):
                 presence,
                 distance_mm,
                 reserved1,
-                reserved2
+                reserved2,
             ) = unpack("<HhHHhI", xvalue)
-            result.update({
-                "motion": 0 if presence == 0 else 1,
-                "temperature": temperature,
-                "battery": battery_level,
-                "distance mm": distance_mm,
-            })
-        else:
+            result.update(
+                {
+                    "motion": 0 if presence == 0 else 1,
+                    "temperature": temperature,
+                    "battery": battery_level,
+                    "distance mm": distance_mm,
+                }
+            )
+        elif device_id == 0x95:
             (
                 battery_level,
                 temperature,
+                mode,
                 presence,
-                reserved2
-            ) = unpack("<HhHQ", xvalue)
-            result.update({
-                "motion": 0 if presence == 0 else 1,
-                "temperature": temperature,
-                "battery": battery_level,
-            })
+                distance_mm,
+                zone,
+                button_press,
+            ) = unpack("<HhHHhHH", xvalue)
+            result.update(
+                {
+                    "battery": battery_level,
+                    "temperature": temperature,
+                    "mode": mode,
+                    "motion": 0 if presence == 0 else 1,
+                    "distance mm": distance_mm,
+                    "zone": zone,
+                    "button press": button_press,
+                }
+            )
+        else:
+            (battery_level, temperature, presence, reserved2) = unpack("<HhHQ", xvalue)
+            result.update(
+                {
+                    "motion": 0 if presence == 0 else 1,
+                    "temperature": temperature,
+                    "battery": battery_level,
+                }
+            )
     else:
         device_type = None
 
@@ -72,7 +92,7 @@ def parse_acconeer(self, data: bytes, mac: str):
             _LOGGER.info(
                 "BLE ADV from UNKNOWN Acconeer DEVICE: MAC: %s, ADV: %s",
                 to_mac(mac),
-                data.hex()
+                data.hex(),
             )
         return None
 
@@ -89,11 +109,13 @@ def parse_acconeer(self, data: bytes, mac: str):
             return None
     self.lpacket_ids[mac] = packet_id
 
-    result.update({
-        "mac": to_unformatted_mac(mac),
-        "type": device_type,
-        "packet": packet_id,
-        "firmware": firmware,
-        "data": True
-    })
+    result.update(
+        {
+            "mac": to_unformatted_mac(mac),
+            "type": device_type,
+            "packet": packet_id,
+            "firmware": firmware,
+            "data": True,
+        }
+    )
     return result
