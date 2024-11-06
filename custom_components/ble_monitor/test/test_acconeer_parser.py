@@ -91,10 +91,9 @@ class TestAcconeer:
         assert sensor_msg["data"]
         assert sensor_msg["battery"] == 100
         assert sensor_msg["temperature"] == 24
-        assert sensor_msg["mode"] == 1
         assert sensor_msg["distance mm"] == 2442
-        assert sensor_msg["zone"] == 4
-        assert sensor_msg["button press"] == 0
+        assert sensor_msg["distance"] == 4
+        assert sensor_msg["button"] == 0
         assert sensor_msg["rssi"] == -62
 
         data_string = (
@@ -114,8 +113,7 @@ class TestAcconeer:
         assert sensor_msg["data"]
         assert sensor_msg["battery"] == 100
         assert sensor_msg["temperature"] == 24
-        assert sensor_msg["mode"] == 2
         assert sensor_msg["distance mm"] == 0
-        assert sensor_msg["zone"] == 0
-        assert sensor_msg["button press"] == 1
+        assert sensor_msg["distance"] == 0
+        assert sensor_msg["button"] == 1
         assert sensor_msg["rssi"] == -62
