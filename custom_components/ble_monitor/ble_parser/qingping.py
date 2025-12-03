@@ -7,7 +7,7 @@ from .helpers import to_mac, to_unformatted_mac
 _LOGGER = logging.getLogger(__name__)
 
 
-def parse_qingping(self, data: bytes, mac: str):
+def parse_qingping(self, data: bytes, mac: bytes):
     """Qingping parser"""
     msg_length = len(data)
     if msg_length > 12:
@@ -27,6 +27,8 @@ def parse_qingping(self, data: bytes, mac: str):
             device_type = "CGD1"
         elif device_id in [0x0E, 0x24]:
             device_type = "CGDN1"
+        elif device_id in [0x5D, 0x33]:
+            device_type = "CGP22C"
         else:
             device_type = None
 

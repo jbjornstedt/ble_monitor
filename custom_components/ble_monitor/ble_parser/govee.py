@@ -44,6 +44,13 @@ def decode_temps_probes(packet_value: int) -> float:
     return float(packet_value / 100)
 
 
+def decode_temps_probes_negative(packet_value: int) -> float:
+    """Filter potential negative temperatures."""
+    if packet_value < 0:
+        return 0.0
+    return float(packet_value)
+
+
 def decode_pm25_from_4_bytes(packet_value: int) -> int:
     """Decode humidity values"""
     packet_value &= 0x7FFFFFFF
@@ -142,7 +149,7 @@ def parse_govee(self, data: str, service_class_uuid16: int, local_name: str, mac
                 data.hex()
             )
     elif msg_length == 13 and (
-        service_class_uuid16 == 0x5178
+        service_class_uuid16 == 0x5179
         or device_id == 0x8801
     ):
         device_type = "H5179"
@@ -204,6 +211,18 @@ def parse_govee(self, data: str, service_class_uuid16: int, local_name: str, mac
             "temperature probe 2": decode_temps_probes(temp_probe_2),
             "temperature alarm probe 2": decode_temps_probes(high_temp_alarm_2),
         })
+    elif msg_length == 24 and (
+            service_class_uuid16 == 0x5191
+            or device_id == 0xAC63
+    ):
+        device_type = "H5191"
+        (temp_probe_1, high_temp_alarm_1, _, temp, _, _) = unpack(
+            ">hhhhhh", data[12:24])
+        result.update({
+            "temperature probe 1": decode_temps_probes(temp_probe_1),
+            "temperature alarm probe 1": decode_temps_probes(high_temp_alarm_1),
+            "temperature": decode_temps_probes(temp),
+        })
     elif msg_length == 24 and service_class_uuid16 == 0x5198:
         device_type = "H5198"
         sensor_id = data[10]
@@ -231,6 +250,42 @@ def parse_govee(self, data: str, service_class_uuid16: int, local_name: str, mac
         else:
             _LOGGER.debug("Unknown sensor id found for Govee H5198. Data %s", data.hex())
             return None
+    elif msg_length == 24 and device_id == 0xEA1C:
+        device_type = "H5055"
+        battery = data[6]
+        if battery:
+            result.update({"battery": battery})
+        sensor_id = data[7]
+        (temp_probe_first, high_temp_alarm_first, low_temp_alarm_first, _, temp_probe_second, high_temp_alarm_second, low_temp_alarm_second) = unpack(
+            "<hhhchhh", data[9:22]
+        )
+        if int(sensor_id) & 0xC0 == 0:
+            result.update({
+                "temperature probe 1": decode_temps_probes_negative(temp_probe_first),
+                "temperature alarm probe 1": decode_temps_probes_negative(high_temp_alarm_first),
+                "low temperature alarm probe 1": decode_temps_probes_negative(low_temp_alarm_first),
+                "temperature probe 2": decode_temps_probes_negative(temp_probe_second),
+                "temperature alarm probe 2": decode_temps_probes_negative(high_temp_alarm_second),
+                "low temperature alarm probe 2": decode_temps_probes_negative(low_temp_alarm_second)
+            })
+        elif int(sensor_id) & 0xC0 == 64:
+            result.update({
+                "temperature probe 3": decode_temps_probes_negative(temp_probe_first),
+                "temperature alarm probe 3": decode_temps_probes_negative(high_temp_alarm_first),
+                "low temperature alarm probe 3": decode_temps_probes_negative(low_temp_alarm_first),
+                "temperature probe 4": decode_temps_probes_negative(temp_probe_second),
+                "temperature alarm probe 4": decode_temps_probes_negative(high_temp_alarm_second),
+                "low temperature alarm probe 4": decode_temps_probes_negative(low_temp_alarm_second),
+            })
+        elif int(sensor_id) & 0xC0 == 128:
+            result.update({
+                "temperature probe 5": decode_temps_probes_negative(temp_probe_first),
+                "temperature alarm probe 5": decode_temps_probes_negative(high_temp_alarm_first),
+                "low temperature alarm probe 5": decode_temps_probes_negative(low_temp_alarm_first),
+                "temperature probe 6": decode_temps_probes_negative(temp_probe_second),
+                "temperature alarm probe 6": decode_temps_probes_negative(high_temp_alarm_second),
+                "low temperature alarm probe 6": decode_temps_probes_negative(low_temp_alarm_second),
+            })
     else:
         if self.report_unknown == "Govee":
             _LOGGER.info(
